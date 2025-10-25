@@ -1,12 +1,20 @@
 from fastapi import FastAPI
 import uvicorn
 
+# Import the instrumentator
+# PT-BR: Importa o instrumentador
+from prometheus_fastapi_instrumentator import Instrumentator
+
 # Create a FastAPI application instance
 # PT-BR: Cria uma instância da aplicação FastAPI
 app = FastAPI(
     title="Mentoring AI/ML API",
     version="0.1.0",
 )
+
+# Instrument the app with default metrics. This exposes the /metrics endpoint.
+# PT-BR: Instrumenta a aplicação com métricas padrão. Isso expõe o endpoint /metrics.
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/healthz", tags=["Health"])
 def health_check():

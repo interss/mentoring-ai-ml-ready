@@ -1,27 +1,52 @@
-# 1. Base image: We use an official Python 3.11 slim image
-# PT-BR: 1. Imagem base: Usamos uma imagem oficial do Python 3.11 slim
-FROM python:3.11-slim
+# =================================================================
+# STAGE 1: The "Builder" stage
+# PT-BR: ESTÁGIO 1: O estágio "Construtor"
+# =================================================================
+FROM python:3.11 AS builder
 
-# 2. Define the working directory inside the container
-# PT-BR: 2. Define o diretório de trabalho dentro do contêiner
+# Set the working directory
+# PT-BR: Define o diretório de trabalho
 WORKDIR /app
 
-# 3. Copy the dependency file to the container
-# PT-BR: 3. Copia o arquivo de dependências para o contêiner
+# Upgrade pip and install wheel to ensure everything works smoothly
+# PT-BR: Atualiza o pip e instala o 'wheel' para garantir que tudo funcione bem
+RUN pip install --upgrade pip wheel
+
+# Copy only the requirements file to leverage Docker cache
+# PT-BR: Copia apenas o arquivo de requisitos para aproveitar o cache do Docker
 COPY requirements.txt .
 
-# 4. Install the dependencies
-# PT-BR: 4. Instala as dependências
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies as "wheels"
+# PT-BR: Instala as dependências como "wheels"
+RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
-# 5. Copy all the application code (the 'app' folder) into the container
-# PT-BR: 5. Copia todo o código da aplicação (a pasta 'app') para o contêiner
+
+# =================================================================
+# STAGE 2: The "Final" stage
+# PT-BR: ESTÁGIO 2: O estágio "Final"
+# =================================================================
+FROM python:3.11-slim
+
+# Set the working directory
+# PT-BR: Define o diretório de trabalho
+WORKDIR /app
+
+# Copy the pre-compiled packages from the "builder" stage
+# PT-BR: Copia os pacotes pré-compilados do estágio "builder"
+COPY --from=builder /app/wheels /wheels/
+
+# Install the packages from the local wheels
+# PT-BR: Instala os pacotes a partir dos wheels locais
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/*
+
+# Copy the application code
+# PT-BR: Copia o código da aplicação
 COPY ./app .
 
-# 6. Expose port 8000 so we can connect to the container
-# PT-BR: 6. Expõe a porta 8000 para que possamos nos conectar ao contêiner
+# Expose the port
+# PT-BR: Expõe a porta
 EXPOSE 8000
 
-# 7. Command to start the application when the container is run
-# PT-BR: 7. Comando para iniciar a aplicação quando o contêiner for executado
+# Command to start the application
+# PT-BR: Comando para iniciar a aplicação
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

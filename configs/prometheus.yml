@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s # How often to scrape targets
+                       # PT-BR: Com que frequência buscar as métricas dos alvos
+
+scrape_configs:
+  - job_name: 'fastapi-app'
+    # Scrape metrics from this address
+    # PT-BR: Buscar métricas deste endereço
+    static_configs:
+      - targets: ['fastapi_app:8000'] # 'fastapi_app' is the service name in docker-compose
+                                       # PT-BR: 'fastapi_app' é o nome do nosso serviço no docker-compose
